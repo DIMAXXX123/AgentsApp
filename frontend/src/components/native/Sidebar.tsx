@@ -7,6 +7,7 @@ import { AuthButton } from "../auth/AuthButton";
 interface SidebarProps {
   activeAgentId: string | null;
   agentSessions: Record<string, { sessionId: string | null; messages: any[] }>;
+  busyAgentIds?: string[];
   onAgentSelect: (agentId: string) => void;
   onNewAgentRoom: () => void;
   currentMode: "group" | "agent";
@@ -24,17 +25,19 @@ const getAgentColor = (agentId: string) => {
   return colorMap[agentId] || "var(--claude-text-accent)";
 };
 
-export function Sidebar({ 
-  activeAgentId, 
-  agentSessions, 
-  onAgentSelect, 
+export function Sidebar({
+  activeAgentId,
+  agentSessions,
+  busyAgentIds = [],
+  onAgentSelect,
   onNewAgentRoom,
   currentMode,
-  onModeChange 
+  onModeChange
 }: SidebarProps) {
   const [showSettings, setShowSettings] = useState(false);
   const { getWorkerAgents } = useAgentConfig();
   const agents = getWorkerAgents();
+  const busy = new Set(busyAgentIds);
 
   return (
     <div className="layout-sidebar">
@@ -72,9 +75,10 @@ export function Sidebar({
       <div className="sidebar-agent-list">
         {agents.map((agent) => {
           const isActive = activeAgentId === agent.id && currentMode === "agent";
+          const isBusy = busy.has(agent.id);
           const hasMessages = agentSessions[agent.id]?.messages.length > 0;
           const messageCount = agentSessions[agent.id]?.messages.length || 0;
-          
+
           return (
             <div
               key={agent.id}
@@ -82,24 +86,26 @@ export function Sidebar({
                 onAgentSelect(agent.id);
                 onModeChange("agent");
               }}
-              className={`sidebar-agent-item ${isActive ? "active" : ""}`}
+              className={`sidebar-agent-item ${isActive ? "active" : ""} ${isBusy ? "busy" : ""}`}
             >
               {/* Agent Indicator */}
-              <div 
+              <div
                 className="sidebar-agent-dot"
                 style={{ backgroundColor: getAgentColor(agent.id) }}
               />
-              
+
               {/* Agent Info */}
               <div className="sidebar-agent-info">
                 <div className="sidebar-agent-name">{agent.name}</div>
                 <div className="sidebar-agent-desc">{agent.description}</div>
               </div>
 
-              {/* Message Count */}
-              {hasMessages && (
+              {/* Working badge or message count */}
+              {isBusy ? (
+                <div className="sidebar-agent-working">working…</div>
+              ) : hasMessages ? (
                 <div className="sidebar-agent-count">{messageCount}</div>
-              )}
+              ) : null}
             </div>
           );
         })}

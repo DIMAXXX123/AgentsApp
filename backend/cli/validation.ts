@@ -4,7 +4,14 @@
  * Common validation functions used across different runtime CLI entry points.
  */
 
+import { createRequire } from "node:module";
 import type { Runtime } from "../runtime/types.ts";
+
+// Path to the SDK's bundled cli.js. The SDK spawns `node <path>` to run it,
+// so the path MUST be a JS file readable by Node — not the system `claude`
+// binary (e.g. on Windows it's a Bun-compiled .exe).
+const requireFromHere = createRequire(import.meta.url);
+const SDK_BUNDLED_CLI = requireFromHere.resolve("@anthropic-ai/claude-code/cli.js");
 
 /**
  * Detects if a file is an asdf shim by checking for the asdf exec pattern
@@ -54,6 +61,12 @@ async function resolveWrapperScript(
   runtime: Runtime,
   scriptPath: string,
 ): Promise<string> {
+  // Skip binary executables — readTextFile on a binary lets random byte
+  // sequences match the `exec "..."` regex (e.g. .exe contains 'echo hi')
+  // and the SDK then tries to spawn that garbage instead of Claude.
+  if (/\.(exe|cmd|bat|com|dll)$/i.test(scriptPath)) {
+    return scriptPath;
+  }
   try {
     const content = await runtime.readTextFile(scriptPath);
     const match = content.match(/exec\s+"([^"]+)"/);
@@ -184,6 +197,13 @@ export async function validateClaudeCli(
     if (versionResult.success) {
       console.log(`✅ Claude CLI found: ${versionResult.stdout.trim()}`);
       console.log(`   Path: ${claudePath}`);
+      // The SDK spawns `node <path>` and CAN'T run a native .exe / Bun binary.
+      // If the system Claude is one of those, return the SDK's bundled cli.js
+      // instead so downstream `pathToClaudeCodeExecutable` works.
+      if (/\.(exe|cmd|bat|com)$/i.test(claudePath)) {
+        console.log(`   Using SDK bundled cli.js for Node SDK calls: ${SDK_BUNDLED_CLI}`);
+        return SDK_BUNDLED_CLI;
+      }
       return claudePath;
     } else {
       const pathType = customPath ? "Custom" : "Auto-detected";

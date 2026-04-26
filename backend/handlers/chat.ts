@@ -1,5 +1,13 @@
 import { Context } from "hono";
-import { AbortError, query } from "@anthropic-ai/claude-code";
+import { query } from "@anthropic-ai/claude-code";
+
+// SDK v1.0.128 removed the named AbortError export — detect via error.name.
+class AbortError extends Error {
+  constructor(message?: string) {
+    super(message);
+    this.name = "AbortError";
+  }
+}
 import Anthropic from "@anthropic-ai/sdk";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { prepareClaudeAuthEnvironment, writeClaudeCredentialsFile } from "../auth/claude-auth-utils.ts";
@@ -528,19 +536,45 @@ async function* executeClaudeCommand(
     // Apply auth environment to process.env temporarily
     const originalEnv: Record<string, string | undefined> = {};
     
-    // Set CLAUDE_CODE_OAUTH_TOKEN if available and clear API key env vars
-    if (claudeAuth?.accessToken) {
+    // Resolve OAuth access token: prefer the value passed in the request,
+    // fall back to the credentials file written by Electron's OAuth flow.
+    // This makes direct curl calls work too, and stops a stale ANTHROPIC_API_KEY
+    // (e.g. one inherited from .env) from shadowing the OAuth path.
+    let resolvedAccessToken: string | undefined = claudeAuth?.accessToken;
+    if (!resolvedAccessToken) {
+      try {
+        const fsMod = await import("node:fs");
+        const pathMod = await import("node:path");
+        const credPath = pathMod.join(
+          process.env.HOME || process.env.USERPROFILE || process.cwd(),
+          ".claude-credentials.json",
+        );
+        if (fsMod.existsSync(credPath)) {
+          const raw = fsMod.readFileSync(credPath, "utf8");
+          const parsed = JSON.parse(raw);
+          const fileTok: string | undefined = parsed?.claudeAiOauth?.accessToken;
+          const fileExp: number | undefined = parsed?.claudeAiOauth?.expiresAt;
+          if (fileTok && (!fileExp || fileExp > Date.now() + 5 * 60 * 1000)) {
+            resolvedAccessToken = fileTok;
+          }
+        }
+      } catch {
+        // Ignore — fall through without OAuth.
+      }
+    }
+
+    if (resolvedAccessToken) {
       originalEnv.CLAUDE_CODE_OAUTH_TOKEN = process.env.CLAUDE_CODE_OAUTH_TOKEN;
       originalEnv.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
       originalEnv.CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
-      
-      process.env.CLAUDE_CODE_OAUTH_TOKEN = claudeAuth.accessToken;
+
+      process.env.CLAUDE_CODE_OAUTH_TOKEN = resolvedAccessToken;
       delete process.env.ANTHROPIC_API_KEY;
       delete process.env.CLAUDE_API_KEY;
-      
+
       if (debugMode) {
         console.log("[DEBUG] Set CLAUDE_CODE_OAUTH_TOKEN and cleared API key env vars");
-        console.log("[DEBUG] OAuth token length:", claudeAuth.accessToken.length);
+        console.log("[DEBUG] OAuth token length:", resolvedAccessToken.length);
       }
     }
     
@@ -589,7 +623,7 @@ async function* executeClaudeCommand(
     }
   } catch (error) {
     // Check if error is due to abort
-    if (error instanceof AbortError) {
+    if (error instanceof AbortError || (error instanceof Error && error.name === "AbortError")) {
       yield { type: "aborted" };
     } else {
       if (debugMode) {

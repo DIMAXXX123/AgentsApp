@@ -718,6 +718,7 @@ export function AgentHubPage() {
       <Sidebar
         activeAgentId={activeAgentId}
         agentSessions={agentSessions}
+        busyAgentIds={isLoading && activeAgentId ? [activeAgentId] : []}
         onAgentSelect={handleAgentSwitch}
         onNewAgentRoom={handleNewAgentRoom}
         currentMode={currentMode}

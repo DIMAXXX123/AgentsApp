@@ -1,4 +1,12 @@
-import { query, AbortError } from "@anthropic-ai/claude-code";
+import { query } from "@anthropic-ai/claude-code";
+
+// SDK v1.0.128 removed the named AbortError export, so we detect by name.
+class AbortError extends Error {
+  constructor(message?: string) {
+    super(message);
+    this.name = "AbortError";
+  }
+}
 import type {
   AgentProvider,
   ProviderChatRequest,
@@ -11,9 +19,9 @@ export class ClaudeCodeProvider implements AgentProvider {
   readonly id = "claude-code";
   readonly name = "Claude Code";
   readonly type = "claude-code" as const;
-  
+
   private claudePath: string;
-  
+
   constructor(claudePath: string) {
     this.claudePath = claudePath;
   }
@@ -186,7 +194,7 @@ export class ClaudeCodeProvider implements AgentProvider {
       }
       
     } catch (error) {
-      if (error instanceof AbortError) {
+      if (error instanceof AbortError || (error instanceof Error && error.name === "AbortError")) {
         yield {
           type: "error",
           error: "Request aborted",

@@ -916,3 +916,34 @@ input, textarea {
     padding: 12px 16px;
   }
 }
+
+/* Busy agent: glow pulse on the row + ring around the color dot.
+   Triggered when isLoading && agent.id === activeAgentId. */
+@keyframes agentsapp-row-glow {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(120, 180, 255, 0.45); }
+  50%      { box-shadow: inset 0 0 0 1px rgba(120, 180, 255, 1), 0 0 14px rgba(120, 180, 255, 0.55); }
+}
+@keyframes agentsapp-dot-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(120, 180, 255, 0.7); transform: scale(1); }
+  50%      { box-shadow: 0 0 0 6px rgba(120, 180, 255, 0); transform: scale(1.25); }
+}
+
+.sidebar-agent-item.busy {
+  animation: agentsapp-row-glow 1.4s ease-in-out infinite;
+  background: rgba(120, 180, 255, 0.06);
+}
+
+.sidebar-agent-item.busy .sidebar-agent-dot {
+  animation: agentsapp-dot-pulse 1s ease-in-out infinite;
+}
+
+.sidebar-agent-working {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: rgba(170, 200, 255, 0.95);
+  background: rgba(120, 180, 255, 0.12);
+  border: 1px solid rgba(120, 180, 255, 0.35);
+  padding: 2px 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
