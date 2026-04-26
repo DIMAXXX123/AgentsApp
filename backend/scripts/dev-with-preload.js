@@ -17,9 +17,13 @@ const __dirname = dirname(__filename);
 const env = {
   ...process.env,
   NODE_OPTIONS: '--require ./auth/preload-script.cjs',
-  CLAUDE_CREDENTIALS_PATH: join(process.env.HOME || process.cwd(), '.claude-credentials.json'),
+  CLAUDE_CREDENTIALS_PATH: join(process.env.HOME || process.env.USERPROFILE || process.cwd(), '.claude-credentials.json'),
   DEBUG_PRELOAD_SCRIPT: '1'
 };
+
+// Allow overriding Claude CLI path via env (helps on Windows where auto-detect can fail)
+const claudePathFromEnv = process.env.CLAUDE_PATH;
+const extraArgs = claudePathFromEnv ? ['--claude-path', claudePathFromEnv] : [];
 
 console.log('🔧 Starting backend with Claude OAuth preload script patching...');
 console.log('📁 Preload script:', './auth/preload-script.cjs');
@@ -36,7 +40,8 @@ const child = spawn('npx', [
   'tsx',
   'watch',
   'cli/node.ts',
-  '--debug'
+  '--debug',
+  ...extraArgs
 ], {
   env,
   stdio: 'inherit',

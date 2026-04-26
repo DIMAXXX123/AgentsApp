@@ -14,16 +14,173 @@ export interface AgentSystemConfig {
   agents: Agent[];
 }
 
+// Local backend (started by `cd backend && npm run dev`).
+const LOCAL_API = "http://localhost:8080";
+
+// Dima's project agents — each pinned to its own working directory so
+// claude CLI runs with `cwd` set to that project's root.
 const DEFAULT_AGENTS: Agent[] = [
   {
     id: "orchestrator",
-    name: "Orchestrator Agent",
-    workingDirectory: "/tmp/orchestrator",
+    name: "Orchestrator",
+    workingDirectory: "C:/Users/Dimax/Documents/claude-workspace",
     color: "bg-gradient-to-r from-blue-500 to-purple-500",
-    description: "Intelligent orchestrator that coordinates multi-agent workflows",
-    apiEndpoint: "https://api.claudecode.run",
-    isOrchestrator: true
-  }
+    description: "Coordinates multi-agent workflows. Dispatches @mentions to project agents.",
+    apiEndpoint: LOCAL_API,
+    isOrchestrator: true,
+  },
+  {
+    id: "vault",
+    name: "Vault",
+    workingDirectory: "C:/Users/Dimax/Documents/Obsidian-Vault",
+    color: "bg-gradient-to-r from-amber-500 to-yellow-500",
+    description: "Obsidian vault — daily notes, sessions, knowledge base, ADRs, MOCs.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "lokali",
+    name: "Lokali",
+    workingDirectory: "C:/Users/Dimax/Documents/lokali-site-v3",
+    color: "bg-gradient-to-r from-emerald-500 to-teal-500",
+    description: "Lokali site (latest v3 — Next.js + shadcn).",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "niko-rolovic",
+    name: "Niko Rolovic",
+    workingDirectory: "C:/Users/Dimax/Documents/niko-rolovic-site",
+    color: "bg-gradient-to-r from-rose-500 to-pink-500",
+    description: "Niko Rolovic personal site.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "niko-app",
+    name: "Niko App",
+    workingDirectory: "C:/Users/Dimax/Documents/niko-app",
+    color: "bg-gradient-to-r from-pink-500 to-rose-500",
+    description: "Niko mobile/web app.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "smartbay",
+    name: "Smartbay",
+    workingDirectory: "C:/Users/Dimax/Documents/smartbay-site",
+    color: "bg-gradient-to-r from-cyan-500 to-blue-500",
+    description: "Smartbay site (Next.js).",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "smartbay-brand",
+    name: "Smartbay Brand",
+    workingDirectory: "C:/Users/Dimax/Documents/smartbay-branding",
+    color: "bg-gradient-to-r from-sky-500 to-indigo-500",
+    description: "Smartbay branding assets.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "fortnite",
+    name: "Fortnite Analytics",
+    workingDirectory: "C:/Users/Dimax/Documents/fortnite-analytics",
+    color: "bg-gradient-to-r from-violet-500 to-purple-500",
+    description: "Fortnite Discover collector + dual-Claude protocol.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "fortnite-clips",
+    name: "Fortnite Clips",
+    workingDirectory: "C:/Users/Dimax/Documents/fortnite-clips-bot",
+    color: "bg-gradient-to-r from-purple-500 to-fuchsia-500",
+    description: "Fortnite clips Telegram bot.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "uefn-data",
+    name: "UEFN Data",
+    workingDirectory: "C:/Users/Dimax/Documents/uefn-data",
+    color: "bg-gradient-to-r from-orange-500 to-red-500",
+    description: "UEFN JSON configs + build scripts.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "uefn-killstreak",
+    name: "UEFN Killstreak UI",
+    workingDirectory: "C:/Users/Dimax/Documents/uefn-killstreak-ui",
+    color: "bg-gradient-to-r from-red-500 to-orange-500",
+    description: "UEFN killstreak HUD UI.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "uefn-mcp",
+    name: "UEFN MCP Server",
+    workingDirectory: "C:/Users/Dimax/Documents/uefn-mcp-server",
+    color: "bg-gradient-to-r from-amber-500 to-orange-500",
+    description: "UEFN MCP server bridging Claude to Verse/UEFN.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "cafe",
+    name: "Monochrome Cafe",
+    workingDirectory: "C:/Users/Dimax/Documents/MonochromeCafeV2",
+    color: "bg-gradient-to-r from-stone-500 to-zinc-500",
+    description: "Monochrome Cafe v2 menu/site.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "oishi",
+    name: "Oishi Menu",
+    workingDirectory: "C:/Users/Dimax/Documents/oishi-menu",
+    color: "bg-gradient-to-r from-red-500 to-pink-500",
+    description: "Oishi restaurant menu.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "meliora",
+    name: "Meliora Menu",
+    workingDirectory: "C:/Users/Dimax/Documents/meliora-menu",
+    color: "bg-gradient-to-r from-lime-500 to-green-500",
+    description: "Meliora restaurant menu.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "noir-luxe",
+    name: "Noir Luxe Menu",
+    workingDirectory: "C:/Users/Dimax/Documents/noir-luxe-menu",
+    color: "bg-gradient-to-r from-slate-700 to-zinc-900",
+    description: "Noir Luxe restaurant menu.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "centralpark",
+    name: "Central Park Menu",
+    workingDirectory: "C:/Users/Dimax/Documents/centralpark-menu",
+    color: "bg-gradient-to-r from-green-500 to-emerald-500",
+    description: "Central Park restaurant menu.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "restaurant-saas",
+    name: "Restaurant SaaS",
+    workingDirectory: "C:/Users/Dimax/Documents/restaurant-menu-app",
+    color: "bg-gradient-to-r from-teal-500 to-cyan-500",
+    description: "Restaurant menu SaaS template.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "openclaw",
+    name: "OpenClaw APIs",
+    workingDirectory: "C:/Users/Dimax/Documents/OpenClawApis",
+    color: "bg-gradient-to-r from-indigo-500 to-violet-500",
+    description: "OpenClaw APIs.",
+    apiEndpoint: LOCAL_API,
+  },
+  {
+    id: "ai-tools",
+    name: "AI Tools",
+    workingDirectory: "C:/Users/Dimax/Documents/AI-Tools",
+    color: "bg-gradient-to-r from-fuchsia-500 to-pink-500",
+    description: "UEFN knowledge, Verse examples, references.",
+    apiEndpoint: LOCAL_API,
+  },
 ];
 
 const DEFAULT_CONFIG: AgentSystemConfig = {
@@ -49,7 +206,17 @@ export function useAgentConfig() {
       window.electronAPI!.storage.loadAgentConfig().then((result) => {
         if (result.success && result.data) {
           console.log("📖 Loading from Electron storage:", result.data);
-          setConfig(result.data);
+          // Merge in any newly added DEFAULT_AGENTS that the user has never seen.
+          const existingIds = new Set((result.data.agents || []).map((a: Agent) => a.id));
+          const newDefaults = DEFAULT_CONFIG.agents.filter(a => !existingIds.has(a.id));
+          if (newDefaults.length > 0) {
+            const merged = { agents: [...(result.data.agents || []), ...newDefaults] };
+            console.log("🔀 Merging new default agents:", newDefaults.map(a => a.id));
+            setConfig(merged);
+            window.electronAPI!.storage.saveAgentConfig(merged);
+          } else {
+            setConfig(result.data);
+          }
         } else {
           console.log("🆕 No saved Electron config, using defaults");
           setConfig(DEFAULT_CONFIG);

@@ -12,7 +12,7 @@
   },
   "scripts": {
     "electron": "electron .",
-    "electron:dev": "NODE_ENV=development electron .",
+    "electron:dev": "cross-env NODE_ENV=development electron .",
     "build": "npm run build:frontend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
@@ -106,6 +106,7 @@
     }
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "electron": "^37.4.0",
     "electron-builder": "^25.1.8"
   }
