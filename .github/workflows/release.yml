@@ -1,0 +1,198 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  # Verify the tag is on main branch before building
+  verify-branch:
+    runs-on: ubuntu-latest
+    outputs:
+      is_main: ${{ steps.check.outputs.is_main }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if tag is on main branch
+        id: check
+        run: |
+          # Get the commit SHA that the tag points to
+          TAG_COMMIT=$(git rev-list -n 1 ${{ github.ref_name }})
+          # Check if this commit is on main branch
+          if git branch -r --contains $TAG_COMMIT | grep -q 'origin/main'; then
+            echo "Tag ${{ github.ref_name }} is on main branch"
+            echo "is_main=true" >> $GITHUB_OUTPUT
+          else
+            echo "Tag ${{ github.ref_name }} is NOT on main branch - skipping release"
+            echo "is_main=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: verify-branch
+    if: needs.verify-branch.outputs.is_main == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Linux x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            electron_args: "--linux --x64"
+            artifact_pattern: "*x86_64*.AppImage"
+          # Linux ARM64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+            electron_args: "--linux --arm64"
+            artifact_pattern: "*arm64*.AppImage"
+          # macOS (universal - both Intel and Apple Silicon)
+          - os: macos-latest
+            platform: mac
+            arch: universal
+            electron_args: "--mac"
+            artifact_pattern: "*.dmg"
+          # Windows x64
+          - os: windows-latest
+            platform: win
+            arch: x64
+            electron_args: "--win --x64"
+            artifact_pattern: "Agentrooms*"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Update version from tag
+        shell: bash
+        run: |
+          # Extract version from tag (remove 'v' prefix if present)
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          echo "Setting version to: $VERSION"
+          # Update package.json version
+          npm version $VERSION --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Build frontend
+        run: npm run build:frontend
+
+      - name: Rebuild native dependencies
+        run: npm rebuild
+
+      - name: Install Python setuptools (Ubuntu only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-setuptools
+
+      - name: Install ARM64 cross-compilation tools (Linux ARM64 only)
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
+        run: |
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Setup Python (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Build Electron app
+        run: npx electron-builder ${{ matrix.electron_args }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          # For ARM64 cross-compilation on x64 runner
+          npm_config_arch: ${{ matrix.arch }}
+          npm_config_target_arch: ${{ matrix.arch }}
+
+      - name: List dist directory
+        run: ls -la dist/
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentrooms-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/${{ matrix.artifact_pattern }}
+
+  release:
+    needs: [verify-branch, build]
+    if: needs.verify-branch.outputs.is_main == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+        working-directory: frontend
+
+      - name: Start development server
+        run: |
+          cd frontend
+          npm run dev &
+          # Wait for server to be ready
+          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 1; done'
+        continue-on-error: false
+
+      - name: Record demo videos
+        run: |
+          cd frontend
+          npm run record-demo codeGeneration -- --theme=both
+        continue-on-error: true
+
+      - name: Stop development server
+        run: |
+          # Kill any remaining dev server processes
+          pkill -f "vite" || true
+        continue-on-error: true
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/*/*
+            frontend/demo-recordings/*.webm
+          generate_release_notes: true
+          draft: false
+          prerelease: false
