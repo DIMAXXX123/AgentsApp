@@ -8,6 +8,7 @@ FortnaitBrainrots/
 ├── docs/
 │   ├── dizain-dok.md        дизайн-док: карта, цикл, 11 этапов, баланс
 │   ├── poryadok-sborki.md   порядок добавления всех 18 файлов
+│   ├── baza-znaniy.md       база: пять слоёв карты, 12 понятий, план на месяц
 │   ├── devaisy-s-nulya.md   обучение: девайсы, @editable, события, каркасы
 │   └── uefn-mcp.md          как работает UEFN MCP, генерация моделей, девайсы
 └── verse/
@@ -22,7 +23,8 @@ FortnaitBrainrots/
 
 ## С чего начать
 
-0. `docs/devaisy-s-nulya.md` — если девайсы и Verse ещё непонятны, начни отсюда
+0. `docs/baza-znaniy.md` — начни отсюда: модель мира, ограничения, план на месяц
+0b. `docs/devaisy-s-nulya.md` — как устроены девайсы и Verse, с примером
 1. `docs/dizain-dok.md` — что вообще строим
 2. `verse/README.md` — как поставить каркас в UEFN и запустить
 3. `docs/poryadok-sborki.md` — в каком порядке добавлять остальные файлы
