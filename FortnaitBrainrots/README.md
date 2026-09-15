@@ -8,17 +8,21 @@ FortnaitBrainrots/
 ├── docs/
 │   ├── dizain-dok.md        дизайн-док: карта, цикл, 11 этапов, баланс
 │   ├── poryadok-sborki.md   порядок добавления всех 18 файлов
+│   ├── devaisy-s-nulya.md   обучение: девайсы, @editable, события, каркасы
 │   └── uefn-mcp.md          как работает UEFN MCP, генерация моделей, девайсы
 └── verse/
     ├── README.md            установка в UEFN, разбор каркаса
     ├── brainrot_types.verse каталог, таблица зон, ролл редкости
     ├── player_state.verse   сейв, монеты, сила, удочки
     ├── power_bar.verse      UMG-шкала силы
-    └── game_manager.verse   корневое устройство, петля рыбалки
+    ├── game_manager.verse   корневое устройство, петля рыбалки
+    └── examples/
+        └── tower_device.verse  учебный пример: башня с зоной и апгрейдом
 ```
 
 ## С чего начать
 
+0. `docs/devaisy-s-nulya.md` — если девайсы и Verse ещё непонятны, начни отсюда
 1. `docs/dizain-dok.md` — что вообще строим
 2. `verse/README.md` — как поставить каркас в UEFN и запустить
 3. `docs/poryadok-sborki.md` — в каком порядке добавлять остальные файлы
