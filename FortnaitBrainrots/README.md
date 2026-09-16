@@ -18,6 +18,7 @@ FortnaitBrainrots/
     ├── power_bar.verse      UMG-шкала силы
     ├── game_manager.verse   корневое устройство, петля рыбалки
     ├── debug_tools.verse    читы для тестов (снять с карты перед публикацией)
+    ├── character_animation.verse  анимация на персонажа игрока (UEFN 41.10+)
     └── examples/
         └── tower_device.verse  учебный пример: башня с зоной и апгрейдом
 ```
